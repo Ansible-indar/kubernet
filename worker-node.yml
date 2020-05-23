@@ -23,10 +23,10 @@
       permanent: yes
       state: enabled
     with_items:
-        - 6443/tcp
-        - 2379-2380/tcp
-        - 10250-10252/tcp 
+        - 6783/tcp
+        - 10250/tcp 
         - 10255/tcp
+        - 30000-32767/tcp
   - name: reload firewalld 
     shell: firewall-cmd --reload
 
@@ -58,30 +58,6 @@
   - name: enable and restart kubelet and docker
     shell: systemctl enable kubelet docker; systemctl start kubelet docker
 
-  - name: initialie kubernet
-    shell: kubeadm init >> /tmp/kubernet
-    ignore_errors: yes
-
-  - name: verify result
-    shell: cat /tmp/kubernet | egrep "kubeadm"
-    register: result
-
-  - debug: 
-      msg: echo "{{ result }} " 
-  
-  - name: set user root credential 
-    shell: mkdir -p $HOME/.kube; cp -i /etc/kubernetes/admin.conf $HOME/.kube/config; chown $(id -u):$(id -g) $HOME/.kube/config
-    tags: user-set
-
-  - name: setup pod network 
-    shell: export kubever=$(kubectl version | base64 | tr -d '\n'); kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$kubever"
-    tags: pod-net
-
-  - name: verify cluster
-    shell: kubectl get nodes
-    register: result
-
-
-  - debug:
-      msg: echo "{{ result }}"
+  - name: join worker node 
+    shell: kubeadm join 10.128.0.22:6443 --token 7xvbyj.3cvzpzxp05ynvryx --discovery-token-ca-cert-hash sha256:4e2f5dc8826f8541a014a28a1584d8055688c819c32e23eebc00436c496cce77
 

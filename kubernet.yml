@@ -1,0 +1,87 @@
+---
+
+- hosts: all
+
+  tasks:
+  - name: check the connectivity of kubemaster node
+    ping:
+
+  - name: disable selinux on server
+    selinux:
+      policy: targeted
+      state: permissive 
+  
+#  - name: remove port 
+#    firewalld:
+#      port: 6443/tcp
+#      permanent: yes
+#      state: disabled
+#
+  - name: Add port
+    firewalld:
+      port: "{{item}}"
+      permanent: yes
+      state: enabled
+    with_items:
+        - 6443/tcp
+        - 2379-2380/tcp
+        - 10250-10252/tcp 
+        - 10255/tcp
+  - name: reload firewalld 
+    shell: firewall-cmd --reload
+
+  - name: verfiy port is remove or not 
+    shell: iptables-save | egrep -i "6443|2379|2380|10250|10251|10252|10255|"
+    register: result
+
+  - debug:
+      msg: echo "port {{result }}"
+
+  - name: load the bridge module
+    shell: modprobe br_netfilter ; echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
+
+
+  - name: setup kubernets repo
+    template:
+      src: kubernetes.repo
+      dest: /etc/yum.repos.d/
+    tags: repo
+
+  - name: install kubeadm docker
+    yum: 
+      name: "{{ item }}"
+      state: installed
+    with_items:
+      - kubeadm
+      - docker
+
+  - name: enable and restart kubelet and docker
+    shell: systemctl enable kubelet docker; systemctl start kubelet docker
+
+  - name: initialie kubernet
+    shell: kubeadm init >> /tmp/kubernet
+    ignore_errors: yes
+
+  - name: verify result
+    shell: cat /tmp/kubernet | egrep "kubeadm"
+    register: result
+
+  - debug: 
+      msg: echo "{{ result }} " 
+
+  - name: set user root credential 
+    shell: mkdir -p $HOME/.kube; cp -i /etc/kubernetes/admin.conf $HOME/.kube/config; chown $(id -u):$(id -g) $HOME/.kube/config
+    tags: user-set
+
+  - name: setup pod network 
+    shell: export kubever=$(kubectl version | base64 | tr -d '\n'); kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$kubever"
+    tags: pod-net
+
+  - name: verify cluster
+    shell: kubectl get nodes
+    register: result
+
+
+  - debug:
+      msg: echo "{{ result }}"
+

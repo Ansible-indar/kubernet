@@ -1,6 +1,7 @@
 #####################kubernet master playbook
 # #ansible-playbook kubernet.yml -i hosts
 
+###### update the ip address of worker node in scp stanza in kubernet.yml playbook else worker node playbook failed , then u need to copy kubeadm file manually to worker node /tmp
 
 ###########kubernet worker node
 

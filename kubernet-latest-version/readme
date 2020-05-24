@@ -1,0 +1,8 @@
+#####################kubernet master playbook
+# #ansible-playbook kubernet.yml -i hosts
+
+
+###########kubernet worker node
+
+#ansible-playbook worker-node.yml -i worker-hosts
+

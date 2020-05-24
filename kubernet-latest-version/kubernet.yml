@@ -63,7 +63,7 @@
     ignore_errors: yes
 
   - name: cp file to worker node
-    shell: scp -r 10.128.0.25:/tmp/kubernet 10.128.0.26:/tmp/
+    shell: scp -r /tmp/kubernet 10.128.0.28:/tmp/
     tags: scp
 
   - name: verify result

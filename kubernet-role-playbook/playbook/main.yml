@@ -1,0 +1,11 @@
+---
+
+- hosts:
+    - master
+  roles:
+    - kube8
+
+- hosts:
+    - worker
+  roles:
+    - k-node
